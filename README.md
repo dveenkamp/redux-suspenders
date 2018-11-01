@@ -13,21 +13,26 @@ Redux-suspenders offers a single function as the default export, called createRe
 ```js
 import createResource from 'redux-suspenders';
 
-//helper functions defined here....
+//This example assumes redux-thunk, but it's not required
+const fetchGithubAccount = username => (dispatch, getState) =>
+  fetch(`https://github.com/users/${username}`)
+    .then(response => response.json());
+
+//Assume some reducer listens for this action
+const setUser = user => ({
+  type: 'SET_USER_DATA',
+  payload: user
+});
+
+const loadData = (props) => fetchGithubAccount(props.username);
+const selectData = (state, props) => state.users[props.username]
+const updateData = (response, props) => setUser(response);
 
 //The result of createResource() is a React.Component
-export const MyReduxResource = createResource(
-  //(props) => Redux action
-  //Loads some data. Must be dispatchable, and must return a Promise when dispatched!
-  load, 
-  
-  //(state, props) => data
-  //Selector for the current value of the resource. Return falsy value when data doesn't exist
-  select, 
-  
-  //(response, props) => Redux action
-  //Updates data in Redux
-  update 
+export const GithubUserResource = createResource(
+  loadData,   //Must be dispatchable, and must return a Promise when dispatched!
+  selectData, //Should return falsy value when data doesn't exist
+  updateData  //Should update the data read by the selector
 );
 
 ```
@@ -38,18 +43,17 @@ Any Resource accepts a function as a child, which will only get called once ther
 
 ```js
   import React, { Suspense } from 'react';
-  import { MyReduxResource } from '../src/some-file';
+  import { GithubUserResource } from '../src/githubUserResource';
   
-  const ListReduxState = ({ resourceId }) => {
+  const ShowUserInfo = ({ username }) => {
     return (
       <Suspense fallback={'Loading...'}>
-        {/* resourceId will be available in the load, select, and update functions */}
-        <MyReduxResource resourceId={resourceId}> 
-          {data => (
+        <GithubUserResource username={username}> 
+          {user => (
             {/* Renders only when data is loaded into redux, otherwise renders Suspsense's fallback */}
-            <div>{data}</div>
+            <div>{JSON.stringify(user, null, 2)}</div>
           )
-        </MyReduxResource>
+        </GithubUserResource>
       </Suspense>
     )
   }
