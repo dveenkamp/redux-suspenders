@@ -1,7 +1,7 @@
 {
   "name": "redux-suspenders",
   "version": "1.0.0",
-  "description": "Tie into React's Suspense API whith Redux",
+  "description": "Tie into React's Suspense API with Redux",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
