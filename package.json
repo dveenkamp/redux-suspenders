@@ -1,6 +1,6 @@
 {
   "name": "redux-suspenders",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Tie into React's Suspense API with Redux",
   "main": "index.js",
   "scripts": {
