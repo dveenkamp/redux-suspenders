@@ -1,0 +1,39 @@
+{
+  "name": "redux-suspenders",
+  "version": "1.0.0",
+  "description": "Tie into React's Suspense API whith Redux",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "./node_modules/.bin/webpack",
+    "prepare": "npm run build"
+  },
+  "keywords": [
+    "react",
+    "redux",
+    "suspense",
+    "cache",
+    "resource",
+    "resources",
+    "async"
+  ],
+  "author": "Daniel Veenkamp",
+  "license": "MIT",
+  "devDependencies": {
+    "@babel/cli": "^7.0.0",
+    "@babel/core": "^7.0.1",
+    "@babel/plugin-transform-destructuring": "^7.0.0",
+    "@babel/preset-env": "^7.0.0",
+    "babel-loader": "^8.0.2",
+    "webpack": "^4.19.0",
+    "webpack-cli": "^3.1.0",
+    "react": "^16.6.0",
+    "react-redux": "^5.1.0",
+    "redux": "^4.0.1"
+  },
+  "peerDependencies": {
+    "react": "^16.6.0",
+    "react-redux": "^4.0.0",
+    "redux": "^3.0.0"
+  }
+}
