@@ -1,98 +1,79 @@
-# redux-atoms
-Treat multiple Redux updates as one change
+# redux-suspenders
+Tie into React's Suspense API with a Redux app
 
 ## Setup
 ```js
-npm install --save redux-atoms
-```
-Then, in your application, add atomMiddleware to your middleware chain (preferably near to last), and pass your root reducer into enhanceReducer.
-
-```js
-import { createStore, applyMiddleware } from 'redux';
-import { atomMiddleware, enhanceReducer } from 'redux-atoms';
-import rootReducer from './reducers/index';
-
-const store = createStore(
-  enhanceReducer(rootReducer),
-  applyMiddleware(atomMiddleware)
-);
+npm install --save redux-suspenders
 ```
 
 ## Usage
+Redux-suspenders offers a single function as the default export, called createResource.
+
+### Defining the resource
 ```js
-import { atom } from 'redux-atoms';
+import createResource from 'redux-suspenders';
 
-const increment = () => {
-  return {
-    type: 'INCREMENT'
-  };
-};
+//helper functions defined here....
 
-const incrementBy3 = () => atom({
-  name: 'INCREMENT_BY_3', //name isn't used for anything except for semantics and logging
-  actions: [
-    increment(),
-    increment(),
-    increment()
-  ]
-});
+//The result of createResource() is a React.Component
+export const MyReduxResource = createResource(
+  //(props) => Redux action
+  //Loads some data. Must be dispatchable, and must return a Promise when dispatched!
+  load, 
+  
+  //(state, props) => data
+  //Selector for the current value of the resource. Return falsy value when data doesn't exist
+  select, 
+  
+  //(response, props) => Redux action
+  //Updates data in Redux
+  update 
+);
 
-store.dispatch(incrementBy3()); //Increment gets dispatched 3 times, store only updates once!
 ```
 
-Atomicity is preserved for these actions as well (where the name redux-atoms comes from...), meaning that if another action gets dispatched before `store.dispatch(incrementBy3())` is finished, it will be placed on a queue, and will be re-dispatched once the atomic update is finished...
+### Consuming the resource
+
+Any Resource accepts a function as a child, which will only get called once there is data in the redux store. All props given to your Resource will be provided as the last argument to all of the functions passed into the createResource call.
 
 ```js
-// Let's say you have a custom middleware that dispatches an action whenever it sees 'INCREMENT' actions
-const incrementMiddleware = store => next => action => {
-  if(action.type === 'INCREMENT') {
-    dispatch({ type: 'SAW_AN_INCREMENT!' })
+  import React, { Suspense } from 'react';
+  import { MyReduxResource } from '../src/some-file';
+  
+  const ListReduxState = ({ resourceId }) => {
+    return (
+      <Suspense fallback={'Loading...'}>
+        {/* resourceId will be available in the load, select, and update functions */}
+        <MyReduxResource resourceId={resourceId}> 
+          {data => (
+            {/* Renders only when data is loaded into redux, otherwise renders Suspsense's fallback */}
+            <div>{data}</div>
+          )
+        </MyReduxResource>
+      </Suspense>
+    )
   }
-  return next(action);
-};
 
-//(assume it gets applied to the middleware chain before atomMiddleware)
-
-store.dispatch(incrementBy3());
-
-/**
-Here's what our log will look like:
-
-'INCREMENT'
-'INCREMENT'
-'INCREMENT'
-'SAW_AN_INCREMENT'
-'SAW_AN_INCREMENT'
-'SAW_AN_INCREMENT'
-*/
 ```
 
 ## Movitivation
-I've never worked on a redux application that I haven't used redux-thunk in, or some other way to dispatch multiple redux actions together. The problem is that there is no "at once" with redux; any time an action is dispatched, that creates a brand new store (assuming immutability principles are followed). If I have 3 actions I need to dispatch, I make 3 new instances of the state, which could lead to 3 new renders of the application. Not to mention, it's possible for things to go wrong while executing those actions.
+React Suspense is an awesome feature, and with it, a lot of examples show off `simple-cache-provider`, or even `react-cache` as ways to asynchronously load data inside of render functions. If you're working on an idiomatic (or large) Redux application, however, utilizing these new APIs can feel either like a lot of work, or a lot of best practices will be broken (side-effects in `render`s, storing data in external caches, maybe even having to sync the cache with Redux, etc).
 
-Semantically, we want one action that says "SUBMIT_MY_FORM", but because of how reducers are often structured, we dispatch 3 actions that end up submitting the form, without saying so. We lose context in our debugging, as well as our understanding of the application flow.
+The good news is, if you're using Redux, you already have a client-side cache! This little library hopes to make utilizing Suspense for loading data easy for Redux applications.
 
-Instead of going from `stateA -> stateB -> stateC`,
-
-let's just go from `stateA -> stateC`!
-
-Enter redux-atoms. Simply wrap all of the actions you want dispatched together, and BAM! Atomic redux updates.
+Plus, it uses a render prop! So no side effects are necessary in your components!
 
 ## Considerations
-Redux-atoms currently relies on a plain JS object structure. If you're using redux-immutable, this won't work for you just yet.
-
-Also, nested atoms and async atoms are not implemented, and will not work!
+The `load` function that you provide to `createResource` gets ran with any props given to the Resource component, and dispatches the result of that function. Your function *_must_* return a Promise after being dispatched. This is the only way we can tell React Suspense to wait for the data before rendering. An easy way to do this is using `redux-thunk` and returning a Promise from your thunk:
 
 ```js
-const nestedAtomicUpdate = () => atom({
-  name: 'FIRST_LEVEL',
-  actions: [
-    atom({
-      name: 'DONT_DO_THIS',
-      actions: [
-        action1(),
-        action2()
-      ]
-    })
-  ]
+const loadSomeData = (resourceProps) => (dispatch, getState) => {
+  let request;
+
+//...build request
+
+  return fetch(request) //returns a Promise;
+}
 ```
+
+This is definitely an assumption with how the API should be, and is very much subject to change in the future as more use cases are provided.
