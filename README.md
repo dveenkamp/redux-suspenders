@@ -1,4 +1,8 @@
 # redux-suspenders
+
+![npm](https://img.shields.io/npm/v/redux-suspenders.svg)
+![NpmLicense](https://img.shields.io/npm/l/redux-suspenders.svg)
+
 Tie into React's Suspense API with a Redux app
 
 ## Setup
