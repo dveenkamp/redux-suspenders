@@ -24,4 +24,4 @@ const createResource = (load, select, update) => connect(
     })
 )(Resource);
 
-export default createResource;
+module.exports = createResource;
