@@ -1,6 +1,6 @@
 {
   "name": "redux-suspenders",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Tie into React's Suspense API with Redux",
   "main": "dist/index.js",
   "scripts": {
@@ -15,7 +15,9 @@
     "cache",
     "resource",
     "resources",
-    "async"
+    "async",
+    "react-redux",
+    "redux-suspenders"
   ],
   "author": "Daniel Veenkamp",
   "license": "MIT",
