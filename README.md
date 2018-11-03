@@ -13,9 +13,7 @@ Redux-suspenders offers a single function as the default export, called createRe
 ```js
 import createResource from 'redux-suspenders';
 
-//This example assumes redux-thunk, but it's not required
-const fetchGithubAccount = username => (dispatch, getState) =>
-  fetch(`https://github.com/users/${username}`)
+const fetchGithubAccount = username => fetch(`https://github.com/users/${username}`)
     .then(response => response.json());
 
 //Assume some reducer listens for this action
@@ -30,7 +28,7 @@ const updateData = (response, props) => setUser(response);
 
 //The result of createResource() is a React.Component
 export const GithubUserResource = createResource(
-  loadData,   //Must be dispatchable, and must return a Promise when dispatched!
+  loadData,   //Must either return a Promise directly, or return a Promise when dispatched
   selectData, //Should return falsy value when data doesn't exist
   updateData  //Should update the data read by the selector
 );
@@ -68,16 +66,16 @@ The good news is, if you're using Redux, you already have a client-side cache! T
 Plus, it uses a render prop! So no side effects are necessary in your components!
 
 ## Considerations
-The `load` function that you provide to `createResource` gets ran with any props given to the Resource component, and dispatches the result of that function. Your function *_must_* return a Promise after being dispatched. This is the only way we can tell React Suspense to wait for the data before rendering. An easy way to do this is using `redux-thunk` and returning a Promise from your thunk:
+The `load` function that you provide to `createResource` gets ran with any props given to the Resource component. If the result of `load` is not a promise, it will be dispatched, which must then return a Promise. 
 
 ```js
-const loadSomeData = (resourceProps) => (dispatch, getState) => {
+  //A redux-thunk example
+  const loadSomeData = (resourceProps) => (dispatch, getState) => {
   let request;
-
-//...build request
-
+  
+  //...build request
+  dispatch(({ type: 'SENDING_REQUEST' }));
+  
   return fetch(request) //returns a Promise;
 }
 ```
-
-This is definitely an assumption with how the API should be, and is very much subject to change in the future as more use cases are provided.
